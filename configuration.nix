@@ -12,15 +12,49 @@ nix.settings.experimental-features = [ "nix-command" "flakes" ];
 networking.hostName = "nixos"; 
 #networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
-services.power-profiles-daemon.enable = true;
+#services.power-profiles-daemon.enable = true;
 
 # Enable networking
 networking.networkmanager = {
 enable = true;
   };
 
+#Fail2ban
+services.fail2ban = {
+    enable = true;
+   # Ban IP after 5 failures
+    maxretry = 5;
+    ignoreIP = [
+      # Whitelist some subnets
+      "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"
+      "8.8.8.8" # whitelist a specific IP
+      "nixos.wiki" # resolve the IP via DNS
+    ];
+    bantime = "24h"; # Ban IPs for one day on the first ban
+    bantime-increment = {
+      enable = true; # Enable increment of bantime after each violation
+      formula = "ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)";
+      #multipliers = "1 2 4 8 16 32 64";
+      maxtime = "168h"; # Do not ban for more than 1 week
+      overalljails = true; # Calculate the bantime based on all the violations
+    };
+    jails = {
+      apache-nohome-iptables.settings = {
+        # Block an IP address if it accesses a non-existent
+        # home directory more than 5 times in 10 minutes,
+        # since that indicates that it's scanning.
+        filter = "apache-nohome";
+        action = ''iptables-multiport[name=HTTP, port="http,https"]'';
+        logpath = "/var/log/httpd/error_log*";
+        backend = "auto";
+        findtime = 600;
+        bantime  = 600;
+        maxretry = 5;
+      };
+    };
+  };
+
 #SSH
-services.fail2ban.enable = true;
 services.openssh = {
 enable = false;
 ports = [ 22 ];
@@ -32,7 +66,7 @@ permitRootLogin = "no";
   #firewall
   networking.firewall = {
   enable = true;
-  allowedTCPPorts = [ 22 3478 80 443 51820 ];# SSH22 UDP3478 HTTP80, HTTPS443, VPNWireGuard51820 DHCP67 DNS53
+  allowedTCPPorts = [ 3478 80 443 51820 ];# SSH22 UDP3478 HTTP80, HTTPS443, VPNWireGuard51820 DHCP67 DNS53
   };   
 
 #helps with binaries since NixOS FHS diff  
@@ -62,6 +96,8 @@ kernel.sysctl = {
 
 security.protectKernelImage = true;
 security.lockKernelModules = true;
+
+services.flatpak.enable = false;
 
   # Set your time zone.
   time.timeZone = "Europe/Oslo";
@@ -115,7 +151,7 @@ users.users.null = {
 isNormalUser = true;
 description = "null";
 shell = pkgs.zsh;
-extraGroups = [ "networkmanager" "wheel" "video" "kvm" "libvrtd" ];
+extraGroups = [ "networkmanager" "wheel" "video" "kvm" ];
 };
 
 nixpkgs.config.allowUnfree = true;
@@ -123,6 +159,9 @@ nixpkgs.config.allowUnfree = true;
 #packages, pkgs, PKGS
 environment.systemPackages = with pkgs; [
 qemu
+quickemu
+swtpm
+OVMF
 swaybg
 wofi
 i3blocks
@@ -165,15 +204,6 @@ fonts.packages = with pkgs; [
 nerdfonts
 ];
 
-#virtualization
-programs.virt-manager.enable = true;
-users.groups.libvirtd.members = ["null"];
-virtualisation.spiceUSBRedirection.enable = true;
-virtualisation.libvirtd = {
-enable = true;
-qemuPackage = pkgs.qemu_kvm;
-};
-
 #steam
 programs.steam = {
   enable = false;
@@ -204,7 +234,12 @@ programs.sway.enable = true;
 programs.sway.wrapperFeatures.gtk = false;
 
 #hyprland
-programs.hyprland.enable = true;
+programs.hyprland = {
+enable = false;
+xwayland.enable = false;
+};
+
+environment.variables.MANPAGER = "nvim +Man!";
 
 system.stateVersion = "24.11";
 }
