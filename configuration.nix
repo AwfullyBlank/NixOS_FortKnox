@@ -12,7 +12,7 @@ nix.settings.experimental-features = [ "nix-command" "flakes" ];
 networking.hostName = "nixos"; 
 #networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
-#services.power-profiles-daemon.enable = true;
+services.power-profiles-daemon.enable = true;
 
 # Enable networking
 networking.networkmanager = {
@@ -39,18 +39,18 @@ services.fail2ban = {
       overalljails = true; # Calculate the bantime based on all the violations
     };
     jails = {
-      apache-nohome-iptables.settings = {
+      #apache-nohome-iptables.settings = {
         # Block an IP address if it accesses a non-existent
         # home directory more than 5 times in 10 minutes,
         # since that indicates that it's scanning.
-        filter = "apache-nohome";
-        action = ''iptables-multiport[name=HTTP, port="http,https"]'';
-        logpath = "/var/log/httpd/error_log*";
-        backend = "auto";
-        findtime = 600;
-        bantime  = 600;
-        maxretry = 5;
-      };
+        #filter = "apache-nohome";
+        #action = ''iptables-multiport[name=HTTP, port="http,https"]'';
+        #logpath = "/var/log/httpd/error_log*";
+        #backend = "auto";
+        #findtime = 600;
+        #bantime  = 600;
+        #maxretry = 5;
+      #};
     };
   };
 
@@ -82,6 +82,7 @@ supportedFilesystems = ["ntfs"];
 
 kernelPackages = pkgs.linuxPackages_latest;
 
+
 #harned kernel
 kernel.sysctl = {
  "kernel.unprivileged_userns_clone" = 0; #no unprivleged namespace creation
@@ -94,10 +95,13 @@ kernel.sysctl = {
  };
 };
 
+
 security.protectKernelImage = true;
 security.lockKernelModules = true;
 
+
 services.flatpak.enable = false;
+
 
   # Set your time zone.
   time.timeZone = "Europe/Oslo";
@@ -117,17 +121,20 @@ services.flatpak.enable = false;
     LC_TIME = "nb_NO.UTF-8";
   };
 
+
 #bluetooth
 hardware = {
 bluetooth.enable = true;
 bluetooth.powerOnBoot = true;
 };
 
+
 #enable openGL
 hardware.graphics = {
   enable = true;
   enable32Bit = true;
   };
+
 
   # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
@@ -136,16 +143,19 @@ hardware.graphics = {
     enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
-    pulse.enable = false;
+    pulse.enable = true; #for quickemu sound
   };
+
 
   # Configure console keymap
   console.keyMap = "no";
+
 
   services.printing.enable = false;
   services.pipewire.jack.enable = false;
 
 services.dbus.enable = true;
+
 
 users.users.null = {
 isNormalUser = true;
@@ -154,14 +164,17 @@ shell = pkgs.zsh;
 extraGroups = [ "networkmanager" "wheel" "video" "kvm" ];
 };
 
+
 nixpkgs.config.allowUnfree = true;
+
 
 #packages, pkgs, PKGS
 environment.systemPackages = with pkgs; [
 qemu
+networkmanagerapplet
 quickemu
-swtpm
-OVMF
+swtpm #TPM for qemu
+OVMF #UEFI for qemu
 swaybg
 wofi
 i3blocks
@@ -204,6 +217,7 @@ fonts.packages = with pkgs; [
 nerdfonts
 ];
 
+
 #steam
 programs.steam = {
   enable = false;
@@ -212,6 +226,7 @@ programs.steam = {
   localNetworkGameTransfers.openFirewall = false; # Open ports in the firewall for Steam Local Network Game Transfers
 };
 
+
 #obs
 programs.obs-studio = {
 enable = true;
@@ -219,6 +234,7 @@ plugins = with pkgs.obs-studio-plugins; [
 obs-pipewire-audio-capture
  ];
 };
+
 
 #zsh
 programs.zsh = {
@@ -233,13 +249,16 @@ promptInit = "source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerleve
 programs.sway.enable = true;
 programs.sway.wrapperFeatures.gtk = false;
 
+
 #hyprland
 programs.hyprland = {
 enable = false;
 xwayland.enable = false;
 };
 
+
 environment.variables.MANPAGER = "nvim +Man!";
+
 
 system.stateVersion = "24.11";
 }
