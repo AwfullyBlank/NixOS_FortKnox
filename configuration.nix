@@ -6,8 +6,13 @@ imports =
   ./hardware-configuration.nix
 ];
 
+#flakes
 nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+sops = {
+  defaultSopsFile = ./secrets/secrets.yaml;
+  age.keyFile = "~/.config/sops/age/key.txt";
+};
 
 networking.hostName = "nixos"; 
 
@@ -147,6 +152,7 @@ nixpkgs.config.allowUnfree = true;
 
 #packages, pkgs, PKGS
 environment.systemPackages = with pkgs; [
+sops
 quickemu
 wofi
 i3blocks
@@ -169,6 +175,7 @@ parted
 #games
 modrinth-app
 #progs
+teams-for-linux
 firefox
 librewolf
 #obsidian
