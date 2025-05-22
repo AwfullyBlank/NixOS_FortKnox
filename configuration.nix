@@ -10,8 +10,24 @@ imports =
 nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
 sops = {
-  defaultSopsFile = ./secrets/secrets.yaml;
-  age.keyFile = "~/.config/sops/age/key.txt";
+  defaultSopsFile = "/home/null/nixos/.secrets/secrets.yaml";
+  age.keyFile = "/home/null/.config/sops/age/key.txt";
+  validateSopsFiles = false;
+  secrets = {
+    git-ssh-key = {
+    key = "git_ssh_private_key";
+    path = "/home/null/.ssh/id_ed25519";
+    owner = "null";
+    mode = "0600";
+    };
+    git-public-key = {
+    key = "git_ssh_public_key";
+    path = "/home/null/.ssh/id_ed25519.pub";
+    owner = "null";
+    mode = "0600";
+    };
+
+  };
 };
 
 networking.hostName = "nixos"; 
@@ -30,7 +46,6 @@ services.fail2ban = {
       # Whitelist some subnets
       #"10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"
       #"8.8.8.8" # whitelist a specific IP
-      "nixos.wiki" # resolve the IP via DNS
     ];
     bantime = "24h";
     bantime-increment = {
@@ -66,7 +81,7 @@ loader.efi.canTouchEfiVariables = true;
 supportedFilesystems = ["ntfs"];
 
 kernelPackages = pkgs.linuxPackages_hardened;
-
+kernelModules = [ "nvidia" ];
 
 #harned kernel
 kernel.sysctl = {
@@ -79,7 +94,6 @@ kernel.sysctl = {
  "fs.suid_dumpable" = 0; # no core dumps from SUID progs
  };
 };
-
 
 security.protectKernelImage = true;
 security.lockKernelModules = true;
@@ -116,6 +130,19 @@ hardware.graphics = {
   enable = true;
   enable32Bit = true;
   };
+
+hardware.nvidia = {
+#modsetting.enable = true; #dont work refuses to build
+#powerManagment.enable = true;
+package = config.boot.kernelPackages.nvidiaPackages.production;
+nvidiaSettings = true;
+open = false;
+prime = {
+sync.enable = true;
+amdgpuBusId = "PCI@:230:0:0";
+nvidiaBusId = "PCI@:1:0:0";
+  };
+};
 
 
   # Enable sound with pipewire.
@@ -201,7 +228,7 @@ programs.git = {
 
 #obs
 programs.obs-studio = {
-enable = false;
+enable = false; #disabled, runs heavy background processes
 plugins = with pkgs.obs-studio-plugins; [
 obs-pipewire-audio-capture
  ];
