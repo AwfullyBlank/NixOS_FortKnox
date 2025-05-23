@@ -11,24 +11,12 @@ nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
 sops = {
   defaultSopsFile = "/home/null/nixos/.secrets/secrets.yaml";
-  age.keyFile = "/home/null/.config/sops/age/key.txt";
+  age.keyFile = "/home/null/.config/sops/age/keys.txt";
   validateSopsFiles = false;
   secrets = {
-    git-ssh-key = {
-    key = "git_ssh_private_key";
-    path = "/home/null/.ssh/id_ed25519";
-    owner = "null";
-    mode = "0600";
-    };
-    git-public-key = {
-    key = "git_ssh_public_key";
-    path = "/home/null/.ssh/id_ed25519.pub";
-    owner = "null";
-    mode = "0600";
-    };
-
   };
 };
+
 
 networking.hostName = "nixos"; 
 
@@ -77,11 +65,17 @@ boot = {
 loader.systemd-boot.enable = true;
 loader.efi.canTouchEfiVariables = true;
 
-#ntfs
-supportedFilesystems = ["ntfs"];
+
+supportedFilesystems = [
+"ntfs"
+"exfat"
+];
 
 kernelPackages = pkgs.linuxPackages_hardened;
-kernelModules = [ "nvidia" ];
+kernelModules = [ 
+"nvidia" 
+"exfat"
+];
 
 #harned kernel
 kernel.sysctl = {
@@ -139,8 +133,8 @@ nvidiaSettings = true;
 open = false;
 prime = {
 sync.enable = true;
-amdgpuBusId = "PCI@:230:0:0";
-nvidiaBusId = "PCI@:1:0:0";
+amdgpuBusId = "PCI:230:0:0";
+nvidiaBusId = "PCI:1:0:0";
   };
 };
 
@@ -179,6 +173,7 @@ nixpkgs.config.allowUnfree = true;
 
 #packages, pkgs, PKGS
 environment.systemPackages = with pkgs; [
+exfatprogs
 sops
 quickemu
 wofi
@@ -188,7 +183,7 @@ playerctl
 blueberry
 feh
 unzip
-fastfetch
+pfetch
 wl-clipboard
 grim
 slurp
@@ -267,7 +262,7 @@ programs.sway.wrapperFeatures.gtk = true;
 
 
 environment.variables.MANPAGER = "nvim +Man!";
-
+environment.variables.EDITOR = "nvim";
 
 system.stateVersion = "24.11";
 }
